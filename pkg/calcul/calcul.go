@@ -62,18 +62,18 @@ func PrefixToPostfix(exp string) ([]string, error) {
 				oper = oper[:len(oper)-1]
 			}
 			if len(oper) == 0 {
-				return nil, errors.New("неверное количество скобок")
+				return nil, errors.New("Wrong amount of brascets ")
 			}
 			oper = oper[:len(oper)-1]
 		default:
-			return nil, fmt.Errorf("неизвестный символ: %c", char)
+			return nil, fmt.Errorf("Unknown char %c", char)
 		}
 		i++
 	}
 
 	for len(oper) > 0 {
 		if oper[len(oper)-1] == '(' {
-			return nil, errors.New("неверное количество скобок")
+			return nil, errors.New("Wrong amount of brascets ")
 		}
 		output = append(output, string(oper[len(oper)-1]))
 		oper = oper[:len(oper)-1]
@@ -90,7 +90,7 @@ func EvaluatePostfix(postfix []string) (float64, error) {
 		} else {
 			var result float64
 			if len(stack) < 2 {
-				return 0, errors.New("неверное выражение")
+				return 0, errors.New("Wrong expression")
 			}
 			b := stack[len(stack)-1]
 			a := stack[len(stack)-2]
@@ -105,18 +105,18 @@ func EvaluatePostfix(postfix []string) (float64, error) {
 				result = a * b
 			case "/":
 				if b == 0 {
-					return 0, errors.New("деление на ноль")
+					return 0, errors.New("Division by zero")
 				}
 				result = a / b
 			default:
-				return 0, fmt.Errorf("неизвестный оператор: %s", elem)
+				return 0, fmt.Errorf("unkown operation %s", elem)
 			}
 
 			stack = append(stack, result)
 		}
 	}
 	if len(stack) != 1 {
-		return 0, errors.New("неверное выражение")
+		return 0, errors.New("Wrong expression")
 	}
 
 	return stack[0], nil

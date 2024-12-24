@@ -90,6 +90,6 @@ func (a *Application) StartServer() {
 	http.HandleFunc("/api/v1/calculate", ApplicationHandler)
 	err := http.ListenAndServe("localhost:"+fmt.Sprint(a.Cfg.Port), nil)
 	if err != nil {
-		errors.New("Ошибка при запуске сервера")
+		errors.New("Error while starting srever")
 	}
 }
