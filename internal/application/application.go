@@ -2,23 +2,34 @@ package application
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/MaxMindshtorm/calculator/pkg/calcul"
 )
 
 type Config struct {
-	Port int
+	Port string
+}
+
+func ConfigFromEnv() *Config {
+	cfg := new(Config)
+	cfg.Port = os.Getenv("PORT")
+	if cfg.Port == "" {
+		cfg.Port = "8080"
+	}
+	return cfg
 }
 
 type Application struct {
 	Cfg Config
 }
 
-func New(config Config) *Application {
+func New() *Application {
 	return &Application{
-		Cfg: config,
+		Cfg: *ConfigFromEnv(),
 	}
 }
 
@@ -77,5 +88,8 @@ func ApplicationHandler(w http.ResponseWriter, r *http.Request) {
 
 func (a *Application) StartServer() {
 	http.HandleFunc("/api/v1/calculate", ApplicationHandler)
-	http.ListenAndServe(":"+fmt.Sprint(a.Cfg.Port), nil)
+	err := http.ListenAndServe("localhost:"+fmt.Sprint(a.Cfg.Port), nil)
+	if err != nil {
+		errors.New("Ошибка при запуске сервера")
+	}
 }

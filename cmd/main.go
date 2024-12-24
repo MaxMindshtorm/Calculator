@@ -7,10 +7,7 @@ import (
 )
 
 func main() {
-	cfg := application.Config{
-		Port: 8080,
-	}
-	a := application.New(cfg)
+	a := application.New()
 	a.StartServer()
 	fmt.Println("Hello world")
 }

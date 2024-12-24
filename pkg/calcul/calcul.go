@@ -45,6 +45,10 @@ func PrefixToPostfix(exp string) ([]string, error) {
 
 		switch char {
 		case '+', '-', '*', '/':
+			if char == '-' && (i == 0 || rune(exp[i-1]) == '(') {
+				char = '*'
+				output = append(output, "-1")
+			}
 			for len(oper) > 0 && priority[oper[len(oper)-1]] >= priority[char] {
 				output = append(output, string(oper[len(oper)-1]))
 				oper = oper[:len(oper)-1]
@@ -84,6 +88,7 @@ func EvaluatePostfix(postfix []string) (float64, error) {
 		if val, err := strconv.ParseFloat(elem, 64); err == nil {
 			stack = append(stack, val)
 		} else {
+			var result float64
 			if len(stack) < 2 {
 				return 0, errors.New("неверное выражение")
 			}
@@ -91,7 +96,6 @@ func EvaluatePostfix(postfix []string) (float64, error) {
 			a := stack[len(stack)-2]
 			stack = stack[:len(stack)-2]
 
-			var result float64
 			switch elem {
 			case "+":
 				result = a + b
