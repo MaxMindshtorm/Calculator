@@ -15,6 +15,12 @@ git clone https://github.com/MaxMindshtorm/Calculator.git
 cd Calculator
 ```
 
+### Установка зависимостей
+
+```
+go mod download
+```
+
 ### Запуск
 
 Для запуска нужно ввести команду:
