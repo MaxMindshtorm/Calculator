@@ -1,0 +1,109 @@
+package logic
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"github.com/MaxMindshtorm/calculator/agent/internal/models"
+	"github.com/MaxMindshtorm/calculator/agent/internal/procTasks"
+	"io"
+	"log"
+	"net/http"
+	"sync"
+	"time"
+)
+
+var client = &http.Client{
+	Timeout: 10 * time.Second,
+}
+
+func Worker(id int, wg *sync.WaitGroup, orchestratorURL string) {
+	defer wg.Done()
+
+	log.Printf("Worker %d started", id)
+
+	for {
+		task, err := getTask(orchestratorURL)
+		if err != nil {
+			log.Printf("Worker %d: Error getting task: %v. Retrying in 1 second...", id, err)
+			time.Sleep(1 * time.Second)
+			continue
+		}
+
+		if task == nil {
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+
+		log.Printf("Worker %d: Got task %s: %s %s %s", id, task.ID, task.Arg1, task.Operation, task.Arg2)
+
+		result, err := procTasks.ProcessTask(task)
+		if err != nil {
+			log.Printf("Worker %d: Error processing task: %v", id, err)
+			continue
+		}
+
+		if err := submitTaskResult(task.ID, result, orchestratorURL); err != nil {
+			log.Printf("Worker %d: Error submitting task result: %v", id, err)
+			continue
+		}
+
+		log.Printf("Worker %d: Completed task %s with result %f", id, task.ID, result)
+	}
+}
+
+func getTask(orchestratorURL string) (*models.Task, error) {
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+	resp, err := client.Get(fmt.Sprintf("%s/internal/task", orchestratorURL))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	var taskResp models.TaskResponse
+	if err := json.NewDecoder(resp.Body).Decode(&taskResp); err != nil {
+		return nil, fmt.Errorf("error decoding response: %v", err)
+	}
+
+	return taskResp.Task, nil
+}
+
+func submitTaskResult(taskID string, result float64, orchestratorURL string) error {
+
+	reqBody := models.TaskResultRequest{
+		ID:     taskID,
+		Result: result,
+	}
+
+	reqJSON, err := json.Marshal(reqBody)
+	if err != nil {
+		return fmt.Errorf("Marshal error: %v", err)
+	}
+
+	resp, err := client.Post(
+		fmt.Sprintf("%s/internal/task", orchestratorURL),
+		"application/json",
+		bytes.NewBuffer(reqJSON),
+	)
+	if err != nil {
+		return fmt.Errorf("Post error: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	return nil
+}
