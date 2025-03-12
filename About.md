@@ -52,7 +52,7 @@ Content-Type: application/json
 **Тело ответа:**
 ```json
 {
-  "id": 123
+  "id": "123"
 }
 ```
 
@@ -70,7 +70,7 @@ GET /api/v1/expressions
 {
   "expressions": [
     {
-      "id": 123,
+      "id": "123",
       "status": "completed",
       "result": 6
     },
@@ -97,7 +97,7 @@ GET /api/v1/expressions/:id
 ```json
 {
   "expression": {
-    "id": 123,
+    "id": "123",
     "status": "completed",
     "result": 6
   }
@@ -134,7 +134,7 @@ GET /internal/task
 POST /internal/task
 Content-Type: application/json
 {
-  "id": 456,
+  "id": "456",
   "result": 4
 }
 ```
